@@ -1,0 +1,332 @@
+---
+title: "EM-analysis"
+output:
+  pdf_document: default
+  html_document:
+    theme: readable
+  word_document: default
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+
+Importing packages... 
+```{r include=FALSE}
+library("ggplot2")
+library("ggsignif")
+library("dplyr")
+library("gridExtra")
+library("effsize")
+library("ggpubr")
+```
+
+There are functions hiding here...  
+
+```{r echo=FALSE}
+
+###########
+#FUNCTIONS#
+###########
+
+import_data <- function(num){
+  df <- read.csv(paste(as.character(num), "b_transposed.csv", sep = ""), #transposed data
+                 na.strings = c(0.000, "0.000"), #na.strings to get rid of blank values
+                 check.names = FALSE  #keeps names from same variable identical
+                 )
+  return (df)
+}
+
+make_df <- function(df, class, bio_rep){
+  new.df <- NULL #initialize df 
+  for (i in 2:ncol(df)){ 
+  new.df <- rbind(new.df, data.frame(raw = df[,i], 
+                                       tech_rep = colnames(df[i]), 
+                                       bio_rep = bio_rep, 
+                                       class = class,
+                                       arbit_n = toString(i)))
+  }
+  
+  return(new.df)
+}
+
+# This assumes input is fine. Default: get the mean, but overridable. 
+get_technical_means <- function(df, func = mean){
+  means <- aggregate(df$raw, 
+                  list(tech_rep = df$tech_rep, 
+                       bio_rep = df$bio_rep, 
+                       class = df$class), 
+                  FUN = func, 
+                  na.rm = TRUE)
+}
+
+##########
+#GGSTYLES#
+##########
+
+gglayer <- list(geom_boxplot(outlier.shape = NA), 
+                geom_signif(comparisons = list(c("tsl-", "egfp-")),
+                            textsize = 5, 
+                            test = t.test), 
+                scale_fill_manual(values = c("white", "#EB7F00")), 
+                theme(legend.position = "none"),
+                xlab(element_blank())
+)
+
+vm.width.layer <-   list(ylab("VM width (nm)"), 
+                         xlab(element_blank()), 
+                         stat_compare_means(aes(group = class), method = "t.test"), 
+                         theme(axis.title.x = element_blank()), 
+                         ylim(c(0,200))
+                         )
+
+#save for poster
+#ggsave("width_plot.png", plot = width_plot, width = (19.5/2), height = 14.6, units = 'cm')
+#ggsave("holes_plot.png", plot = holes_plot, width = (19.5/2), height = 14.6, units = 'cm')
+#getwd()
+
+```
+
+And a script hiding here... 
+
+``` {r}
+########
+#SCRIPT#
+########
+
+zero.df <- make_df(import_data(0), "tsl-", "zero")
+three.df <- make_df(import_data(3), "egfp-", "three")
+four.df <- make_df(import_data(4), "egfp-", "four")
+five.df <- make_df(import_data(5), "egfp-", "five")
+seven.df <- make_df(import_data(7), "tsl-", "seven")
+nine.df <- make_df(import_data(9), "tsl-", "nine")
+
+#this is an outlier. Permanently delete it. 
+five.df <- five.df[!five.df$tech_rep=="17500x_j.tif", ]
+
+#Remove data from the edge of oocytes
+remove_zero <- (c("74oox_ad.tif", "5800x_y.tif", "7400x_ac.tif",
+                  "7400x_g.tif", "7400x_h.tif","7400x_u.tif",
+                  "9700x_n.tif"))
+remove_three <- c("5800x_l.tif", "13500x_n.tif")
+remove_five <- c("7400x_l.tif", "7400x_r.tif", "9700x_m.tif")
+remove_seven <- c("74oox_g.tif", "7400x_r.tif")
+remove_nine <- c("7400x_b.tif")
+
+meta.df <- NULL
+
+meta.df <- rbind(filter(zero.df, !tech_rep %in% remove_zero), 
+                  filter(three.df, !tech_rep %in% remove_three), 
+                  four.df, 
+                  filter(five.df, !tech_rep %in% remove_five), 
+                  filter(seven.df, !tech_rep %in% remove_seven), 
+                  filter(nine.df, !tech_rep %in% remove_nine))
+
+means <- get_technical_means(meta.df)
+
+agg_means <- aggregate(means$x, 
+                       list(bio_rep = means$bio_rep, 
+                            class = means$class), 
+                       mean)
+#factorise class to hopefully get things in right order for ggplot
+means$class <- factor(means$class, levels = c("egfp-", "tsl-"))
+agg_means$class <- factor(agg_means$class, levels = c("egfp-", "tsl-"))
+
+#statistics... 
+biol_cohens <- cohen.d(d = agg_means[agg_means$class == "tsl-",]$x, 
+                       f = agg_means[agg_means$class == "egfp-",]$x)
+
+tech_cohens <- cohen.d(d = means[means$class == "tsl-",]$x, 
+                       f = means[means$class == "egfp-",]$x)
+
+```
+
+# Is there a difference in VM width between *tsl-* and *egfp-* wasps? 
+
+To determine if the VM is thinner in *tsl-* versus WT wasps, I measured the VM width across multiple oocytes and 3 wasps per treatment, using an ImageJ macro. I then calculated the mean VM width within each image (techincal replicate), and averaged this to produce the mean width for each individual wasp. I excluded all images of the termini/curved regions of the oocytes, as the vitelline membrane becomes very thick in places, which was throwing out my data. 
+
+The data is *just* significant, using our three biological replicates. If we treat each image as a biological replicate, the data becomes very significant. (I did this as an idiocy check.) I also calculated the effect size using the Cohen's d test. (Unsure if this is appropriate.) The effect size is `r biol_cohens$magnitude`: `r biol_cohens$estimate` for biological replicates and `r tech_cohens$estimate` for technical replicates. Mean VM width tsl-: `r mean(agg_means[agg_means$class=="tsl-", ]$x)` Mean VM width control: `r mean(agg_means[agg_means$class=="egfp-", ]$x)` . 
+
+I had hoped for a more convincing result, given this was obtained by excluding data. But the large effect size is reassuring, and the small sample size does give a low statistical power.  
+
+```{r}
+mean_plot <- ggerrorplot(means, x="class", y = "x", 
+                               add = "jitter", 
+                               add.params = list(color="darkgrey"),
+                         desc_stat = "mean_sd") + 
+  ggtitle("Technical replicates") + 
+  vm.width.layer
+
+aggregated_plot <- ggerrorplot(agg_means, x="class", y = "x", 
+ #                              add = "jitter", 
+                               desc_stat = "mean_sd", 
+                               add.params = list(color="darkgrey")) + 
+  #ggtitle("Biological replicates") + 
+  vm.width.layer
+
+aggregated_plot <- ggadd(aggregated_plot, c("jitter"), jitter = .5, color = "grey", alpha = 0.8)
+
+
+grid.arrange(aggregated_plot, mean_plot, nrow = 1)
+  
+```
+
+
+```{r}
+
+edges.df <- rbind(filter(zero.df, tech_rep %in% remove_zero), 
+                  filter(three.df, tech_rep %in% remove_three), 
+                  filter(five.df, tech_rep %in% remove_five), 
+                  filter(seven.df, tech_rep %in% remove_seven), 
+                  filter(nine.df, tech_rep %in% remove_nine))
+
+edges_means <- get_technical_means(edges.df)
+edges_means$class <- factor(edges_means$class, levels = c("egfp-", "tsl-"))
+
+edges_sd <- get_technical_means(edges.df, func = sd)
+edges_sd$class <- factor(edges_sd$class, levels = c("egfp-", "tsl-"))
+
+edges_iqr <- get_technical_means(edges.df, func = IQR)
+edges_iqr$class <- factor(edges_iqr$class, levels = c("egfp-", "tsl-"))
+
+edges_cohens <- cohen.d(d = edges_means[edges_means$class == "tsl-",]$x, 
+                       f = edges_means[edges_means$class == "egfp-",]$x)
+
+edges_sd_cohens <- cohen.d(d = edges_sd[edges_sd$class == "tsl-",]$x, 
+                       f = edges_sd[edges_sd$class == "egfp-",]$x)
+
+```
+
+## What does the excluced terminal data look like? 
+
+When plotting the excluded terminal values, the *tsl-* values are highly variable, but there doesn't seem to be an aboslute difference in mean VM width. Note that for these data, I had to treat technical replicates as biological replicates, as some biological replicates completely lacked data points. This is acceptable, as I'm only trying to get a feel for the data. 
+
+I thought there might be a difference in measures of range- standard deviation, and interquartile range. This doesn't seem to be the case. 
+
+```{r}
+
+means_plot <- ggplot(edges_means, aes(x=class, y=x, fill = class)) + 
+  gglayer + 
+  geom_jitter() + 
+  ggtitle("Mean VM width")
+
+stdev <- ggplot(edges_sd, aes(x=class, y=x, fill = class)) + 
+  gglayer + 
+  geom_jitter() + 
+  ggtitle("Standard deviation of VM width")
+
+interquartile <- ggplot(edges_iqr, aes(x=class, y=x, fill = class)) + 
+  gglayer + 
+  geom_jitter() + 
+  ggtitle("Interquartile range of VM width")
+
+grid.arrange(means_plot, stdev, interquartile, nrow=1)
+
+
+```
+
+```{r}
+edges_means$terminal <- "terminal"
+means$terminal <- "not terminal"
+
+terminal_data <- rbind(edges_means, means)
+
+overall_t.test <- t.test(x=terminal_data[terminal_data$terminal == "terminal",]$x, 
+                         y=terminal_data[terminal_data$terminal == "not terminal",]$x)
+
+overall_cohens <- cohen.d(d=terminal_data[terminal_data$terminal == "terminal",]$x, 
+                         f=terminal_data[terminal_data$terminal == "not terminal",]$x)
+```
+
+\newpage
+
+For both the control and *tsl-* wasps, the termini of the oocytes is thicker than the middle. This suggests that excluding the data is valid. BOOM. Overall, the difference is also statistically detectable: p = `r overall_t.test$p.value` (student's t-test); effect size is `r overall_cohens$magnitude` = `r overall_cohens$estimate` (cohen's test). However, note that for this analysis I treated technical replicates as biological replicates. 
+
+
+```{r}
+tmp_2 <- ggerrorplot(terminal_data, x="terminal", y = "x", facet.by = "class", 
+                               add = "jitter", 
+                               add.params = list(color="darkgrey")) + 
+  vm.width.layer + 
+  stat_compare_means(aes(group = terminal), method = "t.test") + 
+  #ggtitle("Biological replicates") + 
+  ylim(c(0, 350))
+
+tmp_2
+
+```
+
+\newpage
+
+# Quantifying holes in the vitelline membrane  
+
+The *tsl-* wasps also have clear gaps in their vitelline membranes. I counted the number of these per unit length (to correct for different magnifications). 
+
+```{r}
+f <- read.csv("gaps.csv", sep = ",") #open file with info on gaps/image and membrane length
+
+f$holes_per_nm = f$holes / f$LENGTH 
+
+holes_per_nm.df <- data.frame(sample = c("0B", "7B", "9B", "4B", "5B", "3B"), 
+                       means = c(mean(f$holes_per_nm[f$Sample=='0B']),
+                                 mean(f$holes_per_nm[f$Sample=='7B']),
+                                 mean(f$holes_per_nm[f$Sample=='9B']), 
+                                 mean(f$holes_per_nm[f$Sample=='4B']),
+                                 mean(f$holes_per_nm[f$Sample=='5B']),
+                                 mean(f$holes_per_nm[f$Sample=='3B'])
+                                 ), 
+                       trt = c("tsl-", "tsl-", "tsl-", "egfp-", "egfp-", "egfp-")
+)
+
+holes_per_nm.df$trt <- factor(holes_per_nm.df$trt, levels = c("egfp-", "tsl-"))
+
+holes_test <- t.test(x = c(mean(f$holes_per_nm[f$Sample=='0B']),
+            mean(f$holes_per_nm[f$Sample=='7B']),
+            mean(f$holes_per_nm[f$Sample=='9B'])), 
+      y = c(mean(f$holes_per_nm[f$Sample=='4B']),
+            mean(f$holes_per_nm[f$Sample=='5B']),
+            mean(f$holes_per_nm[f$Sample=='3B'])), 
+      var.equal = FALSE
+      ) 
+
+holes_cohen <- cohen.d(d = c(mean(f$holes_per_nm[f$Sample=='0B']),
+            mean(f$holes_per_nm[f$Sample=='7B']),
+            mean(f$holes_per_nm[f$Sample=='9B'])), 
+      f = c(mean(f$holes_per_nm[f$Sample=='4B']),
+            mean(f$holes_per_nm[f$Sample=='5B']),
+            mean(f$holes_per_nm[f$Sample=='3B']))
+      ) 
+```
+
+This does come out as "statistically significant"- see plot below. The effect size is `r holes_cohen$magnitude`: `r holes_cohen$estimate`. The measurement we get out of this is somewhat daft: about 0.1 holes per $\mu$m. 
+
+```{r}
+
+holes_plot_1 <- ggplot(holes_per_nm.df, aes(x = trt, y = means * 1000, fill = trt)) +
+  gglayer +
+  ylab(expression(paste("Holes per ", mu, "m")))
+
+holes_per_nm.df$means <- holes_per_nm.df$means * 1000
+
+holes_plot <- ggerrorplot(holes_per_nm.df, x="trt", y = "means", 
+                               add = "jitter", 
+                               add.params = list(jitter = .5, color = "grey", alpha = 0.8), 
+                          desc_stat = "mean_sd") + 
+  stat_compare_means(method = "t.test") + 
+  ylab(expression(paste("Holes per ", mu, "m"))) + 
+  theme(axis.title.x = element_blank()) 
+
+
+holes_plot
+```
+
+In conclusion... 
+
+- we can detect a (barely) significant difference in VM width in *tsl-* vs control wasps, when data from the termini are excluded. 
+- when treating technical replicates as biological replicates (for reasons of sample size), the termini of both treated and control oocytes are thicker than the middles. This validates the decision to exclude these data. 
+- there is a detectable difference in number of holes per micron between the two treatments. 
+
+The termini of the *tsl-* oocytes do look different to the wild types. Therefore I wonder if it's worth looking at those further, as we are investigating the terminal patterning system. 
+
+
