@@ -51,3 +51,7 @@ nice_plot <- ggerrorplot(tidy_ct, x="Gene", y = "d_ct",
   ylab(expression(paste(Delta, " ", C[T])))
 
 nice_plot 
+
+
+cohen.d(d = tidy_ct[tidy_ct$Gene == "tsl",]$d_ct, 
+        f = tidy_ct[tidy_ct$Gene == "egfp",]$d_ct)
