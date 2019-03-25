@@ -148,7 +148,7 @@ To determine if the VM is thinner in *tsl-* versus WT wasps, I measured the VM w
 
 The data is *just* significant, using our three biological replicates. If we treat each image as a biological replicate, the data becomes very significant. (I did this as an idiocy check.) I also calculated the effect size using the Cohen's d test. (Unsure if this is appropriate.) The effect size is `r biol_cohens$magnitude`: `r biol_cohens$estimate` for biological replicates and `r tech_cohens$estimate` for technical replicates. Mean VM width tsl-: `r mean(agg_means[agg_means$class=="tsl-", ]$x)` Mean VM width control: `r mean(agg_means[agg_means$class=="egfp-", ]$x)` . 
 
-I had hoped for a more convincing result, given this was obtained by excluding data. But the large effect size is reassuring, and the small sample size does give a low statistical power.  
+I had hoped for a more convincing result, given this was obtained by excluding some data (though I convinced the rationale for this is solid). But the large effect size is reassuring, and the small sample size does give a low statistical power.  
 
 ```{r}
 mean_plot <- ggerrorplot(means, x="class", y = "x", 
@@ -198,11 +198,13 @@ edges_sd_cohens <- cohen.d(d = edges_sd[edges_sd$class == "tsl-",]$x,
 
 ```
 
-## What does the excluced terminal data look like? 
+## What does the excluced data look like? 
 
-When plotting the excluded terminal values, the *tsl-* values are highly variable, but there doesn't seem to be an aboslute difference in mean VM width. Note that for these data, I had to treat technical replicates as biological replicates, as some biological replicates completely lacked data points. This is acceptable, as I'm only trying to get a feel for the data. 
+When plotting the excluded values, the *tsl-* values are highly variable, but there doesn't seem to be an aboslute difference in mean VM width. Note that for these data, I had to treat technical replicates as biological replicates, as some biological replicates completely lacked data points. This is acceptable, as I'm only trying to get a feel for the data. 
 
 I thought there might be a difference in measures of range- standard deviation, and interquartile range. This doesn't seem to be the case. 
+
+So it doesn't look like the excluded data is different between treatment and controls- so valid to keep out. 
 
 ```{r}
 
@@ -323,10 +325,9 @@ holes_plot
 
 In conclusion... 
 
-- we can detect a (barely) significant difference in VM width in *tsl-* vs control wasps, when data from the termini are excluded. 
+- we can detect a (barely) significant difference in VM width in *tsl-* vs control wasps, when data from the curved regions of the oocyte are excluded. 
 - when treating technical replicates as biological replicates (for reasons of sample size), the termini of both treated and control oocytes are thicker than the middles. This validates the decision to exclude these data. 
 - there is a detectable difference in number of holes per micron between the two treatments. 
-
-The termini of the *tsl-* oocytes do look different to the wild types. Therefore I wonder if it's worth looking at those further, as we are investigating the terminal patterning system. 
+ 
 
 
