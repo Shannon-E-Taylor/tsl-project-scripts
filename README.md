@@ -12,12 +12,19 @@ qpcr/ contains raw data and scripts for qPCR analysis.
 ## Folder structure 
 
 ├── EM-analysis
+
 │   ├── 0b_transposed.csv #raw data
+
 │   ├── 3b_transposed.csv #raw data
+
 │   ├── 4b_transposed.csv #raw data
+
 │   ├── 5b_transposed.csv #raw data
+
 │   ├── 7b_transposed.csv #raw data
+
 │   ├── 9b_transposed.csv #raw data
+
 │   ├── Distance_Between_Polylines.java #ImageJ script 
 │   ├── EM-analysis-3.1.19.Rmd #Data analysis!
 │   ├── EM_lengths.ods #gaps data
