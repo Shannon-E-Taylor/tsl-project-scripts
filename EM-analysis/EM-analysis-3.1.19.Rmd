@@ -81,10 +81,9 @@ vm.width.layer <-   list(ylab("VM width (nm)"),
                          ylim(c(0,200))
                          )
 
-#save for poster
-#ggsave("width_plot.png", plot = width_plot, width = (19.5/2), height = 14.6, units = 'cm')
-#ggsave("holes_plot.png", plot = holes_plot, width = (19.5/2), height = 14.6, units = 'cm')
-#getwd()
+#save 
+# ggsave(file = "width_plot.png", path = "~/Documents/tsl-project/", plot = width_plot, width = 66, height = 66, units = 'mm')
+# ggsave(file = "holes_plot.png", path = "~/Documents/tsl-project/", plot = holes_plot, width = 66, height = 66, units = 'mm')
 
 ```
 
@@ -165,10 +164,15 @@ aggregated_plot <- ggerrorplot(agg_means, x="class", y = "x",
   #ggtitle("Biological replicates") + 
   vm.width.layer
 
-aggregated_plot <- ggadd(aggregated_plot, c("jitter"), jitter = .5, color = "grey", alpha = 0.8)
+aggregated_plot <- ggadd(aggregated_plot, c("jitter"), jitter = .5, color = "grey", alpha = 0.8) + 
+  scale_x_discrete(labels = c(expression(paste(italic("egfp "), "RNAi")), 
+                            expression(paste(italic("tsl "), "RNAi"))))
 
 
 grid.arrange(aggregated_plot, mean_plot, nrow = 1)
+
+ggsave(file = "width_plot.png", path = "~/Documents/tsl-project/", plot = aggregated_plot, width = 66, height = 66, units = 'mm')
+#ggsave(file = "holes_plot.png", path = "~/Documents/tsl-project/", plot = holes_plot, width = 66, height = 66, units = 'mm')
   
 ```
 
@@ -317,10 +321,15 @@ holes_plot <- ggerrorplot(holes_per_nm.df, x="trt", y = "means",
                           desc_stat = "mean_sd") + 
   stat_compare_means(method = "t.test") + 
   ylab(expression(paste("Holes per ", mu, "m"))) + 
-  theme(axis.title.x = element_blank()) 
+  theme(axis.title.x = element_blank()) + 
+  scale_x_discrete(labels = c(expression(paste(italic("egfp "), "RNAi")), 
+                            expression(paste(italic("tsl "), "RNAi"))))
 
 
 holes_plot
+
+ggsave(file = "holes_plot.png", path = "~/Documents/tsl-project/", plot = holes_plot, width = 66, height = 66, units = 'mm')
+
 ```
 
 In conclusion... 

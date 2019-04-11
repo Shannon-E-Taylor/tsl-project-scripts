@@ -1,5 +1,6 @@
 #Daniel's plots
-
+library("ggplot2")
+library("ggpubr")
 
 plt <- list(geom_jitter(width = 0.3, height = 0.0, alpha = 0.5), 
             xlab("Genotype")) 
@@ -11,9 +12,13 @@ spliced <- data.frame(trt = rep(c("c355>Dm-tsl", "c355>Nv-tsl"), each = 3),
                               1.94, 2.5, 2.64)) 
                       
 spliced_plot <- ggerrorplot(spliced, x= "trt", y = "num") + 
-  plt + ylab("Average number of denticle belts missing") + ylim(0, 8)
+  plt + 
+  ylab("# missing denticle belts") + ylim(0, 8) + 
+  geom_hline(yintercept=0, linetype = "dashed", color = "grey") + 
+  stat_compare_means(method = "t.test", label.x.npc = 0.25)
+                     #label.y = 9) 
 
-spliced_plot
+  spliced_plot <- ggpar(spliced_plot, font.tickslab =9)
 
 ###percent rescue
 
@@ -57,7 +62,11 @@ rescue <- rbind(anterior_rescue, posterior_rescue)
 rescue_plot <- ggerrorplot(rescue, x = "trt", y = "num", facet.by="position") + 
   plt + 
   ylab("% Rescue") + 
-  stat_compare_means(method = "t.test")
+  stat_compare_means(method = "t.test", label.x.npc = 0.25, 
+                     label.y = 70) + 
+  geom_hline(yintercept=0, linetype = "dashed", color = "grey")
+rescue_plot <- ggpar(rescue_plot, font.tickslab =9, ylim = c(0, 70))
+
 rescue_plot
 
 
@@ -74,3 +83,7 @@ uasp_vs_uast_plot <- ggerrorplot(uasp_vs_uast, x = "trt", y = "num") +
   ylab("Average number of denticle belts missing")
 uasp_vs_uast_plot
 
+arr <- ggarrange(spliced_plot, rescue_plot, widths = c(1, 2)) 
+arr
+
+ggsave(arr, file = "dm-plots.png", path = "../", width = 66*3, height = 66, units = "mm")
