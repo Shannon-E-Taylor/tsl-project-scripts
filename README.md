@@ -51,7 +51,7 @@ qpcr/ contains raw data and scripts for qPCR analysis.
 │   └── tsl-qpcr-analysis.R #scripts for analysis
 </pre>
 
-##References 
+## References 
 
 B. P. E. King and J. G. Richards, “Oögenesis in Nasonia vitripennis (Walker) (Hymepnoptera: Pteromalidae),” Proc. R. Entomol. Soc. London A, vol. 44, no. 10–12, pp. 143–157, 1969.
 
