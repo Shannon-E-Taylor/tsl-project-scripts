@@ -1,0 +1,161 @@
+---
+title: "chorion-EM-analysis"
+output:
+  pdf_document: default
+  html_document:
+    theme: readable
+  word_document: default
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+
+Importing packages... 
+```{r include=FALSE}
+library("ggplot2")
+library("ggsignif")
+library("dplyr")
+library("gridExtra")
+library("effsize")
+library("ggpubr")
+```
+
+There are functions hiding here...  
+
+```{r echo=FALSE}
+
+###########
+#FUNCTIONS#
+###########
+
+import_data <- function(num, sep = ","){
+  df <- read.csv(paste(as.character(num), ".csv", sep = ""), #transposed data
+                 sep = sep, 
+                 na.strings = c(0.000, "0.000"), #na.strings to get rid of blank values
+                 check.names = FALSE  #keeps names from same variable identical
+                 )
+  return (df)
+}
+
+make_df <- function(df, class, bio_rep){
+  new.df <- df
+  new.df$bio_rep <- bio_rep
+  new.df$class <- class
+  return(new.df[,2:6])
+}
+
+# This assumes input is fine. Default: get the mean, but overridable. 
+get_technical_means <- function(df, func = mean){
+  means <- aggregate(df$raw, 
+                  list(tech_rep = df$tech_rep, 
+                       bio_rep = df$bio_rep, 
+                       class = df$class), 
+                  FUN = func, 
+                  na.rm = TRUE)
+}
+
+##########
+#GGSTYLES#
+##########
+
+gglayer <- list(geom_boxplot(outlier.shape = NA), 
+                geom_signif(comparisons = list(c("tsl-", "egfp-")),
+                            textsize = 5, 
+                            test = t.test), 
+                scale_fill_manual(values = c("white", "#EB7F00")), 
+                theme(legend.position = "none"),
+                xlab(element_blank())
+)
+
+vm.width.layer <-   list(ylab("Chorion width (nm)"), 
+                         xlab(element_blank()), 
+                         stat_compare_means(aes(group = class), method = "t.test"), 
+                         theme(axis.title.x = element_blank()), 
+                         ylim(c(0,1200))
+                         )
+
+#save for poster
+#ggsave("width_plot.png", plot = width_plot, width = (19.5/2), height = 14.6, units = 'cm')
+#ggsave("holes_plot.png", plot = holes_plot, width = (19.5/2), height = 14.6, units = 'cm')
+#getwd()
+
+```
+
+And a script hiding here... 
+
+
+
+
+``` {r}
+########
+#SCRIPT#
+########
+
+zero.df <- make_df(import_data("one", sep = "\t"), "tsl-", "zero") #I'm a dumbass...
+three.df <- make_df(import_data("three"), "egfp-", "three")
+four.df <- make_df(import_data("four"), "egfp-", "four")
+five.df <- make_df(import_data("five"), "egfp-", "five")
+seven.df <- make_df(import_data("seven"), "tsl-", "seven")
+nine.df <- make_df(import_data("nine"), "tsl-", "nine")
+
+meta.df <- NULL
+
+meta.df <- rbind(zero.df, three.df, 
+                 four.df, five.df, 
+                 seven.df, nine.df)
+
+meta.df <- na.omit(meta.df)
+
+# meta.df <- rbind(filter(zero.df, !tech_rep %in% remove_zero), 
+#                   filter(three.df, !tech_rep %in% remove_three), 
+#                   four.df, 
+#                   filter(five.df, !tech_rep %in% remove_five), 
+#                   filter(seven.df, !tech_rep %in% remove_seven), 
+#                   filter(nine.df, !tech_rep %in% remove_nine))
+
+names(meta.df)[2] <- "AvgDistance"
+
+means <- get_technical_means(meta.df)
+
+agg_means <- aggregate(means$x, 
+                       list(bio_rep = means$bio_rep, 
+                            class = means$class), 
+                       mean)
+#factorise class to hopefully get things in right order for ggplot
+means$class <- factor(means$class, levels = c("egfp-", "tsl-"))
+agg_means$class <- factor(agg_means$class, levels = c("egfp-", "tsl-"))
+
+meta.df <- meta.df[meta.df$AvgDistance <=10000,] #if it more than factor of 10 out it wrong
+
+means.df <- aggregate(meta.df$`Avg distance`, 
+                      )
+
+#statistics... 
+biol_cohens <- cohen.d(d = meta.df[meta.df$class == "tsl-",]$`AvgDistance`, 
+                       f = meta.df[meta.df$class == "egfp-",]$`AvgDistance`)
+
+tech_cohens <- cohen.d(d = means[means$class == "tsl-",]$x, 
+                       f = means[means$class == "egfp-",]$x)
+
+```
+
+
+```{r, include = TRUE}
+
+p <- ggerrorplot(meta.df, x = "class", y = "AvgDistance", add = "jitter", 
+                               add.params = list(jitter = 0.1, color = "grey", alpha = 0.8)) + ylim(0, 1200) + 
+  stat_compare_means(aes(group = class), method = "t.test") + 
+  ylab("Chorion width (nm)") + 
+  theme(axis.title.x = element_blank()) + 
+  scale_x_discrete(labels = c(expression(paste(italic("egfp "), "RNAi")), 
+                            expression(paste(italic("tsl "), "RNAi"))))
+  
+
+p
+  
+ggsave(p, file = "chorion.png", path = "~/Documents/tsl-project/", width = 66, height = 66, units = "mm", dpi = 600)
+```
+
+

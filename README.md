@@ -4,9 +4,9 @@ Supplementary scripts and raw data for Taylor, Tuffrey et al. 2019- available at
 
 ## Useful data: 
 
-All of my *Nasrat*, *ph*, *clos*, *egfp* knockdown embryo cuticles. These are included because there was a lot of variation in the knockdown phenotypes. It is more honest to simply present all our data, than attempt to classify and tabulate it. Note that some of these embryos had empty cucticles because they died in development. 
+All of my *Nasrat*, *ph*, *clos*, *egfp* knockdown embryo cuticles. These are included because there was a lot of variation in the knockdown phenotypes. It is more honest to simply present all our data, than attempt to classify and tabulate it. Note that some of these embryos had empty cucticles because they died in development, but are not permeable to neutral red so do not have the defective vitelline membrane phenotype of *Nv-tsl* RNAi embryos. 
 
-I've also included electron microscopy images of *Nasonia vitripennis* eggshell membranes and other regions. These are uninterpreted, refer to King (1969) for descriptions. These images are shared because they are slightly clearer than provided in the original paper *Nasonia* vitelline membrane paper. 
+I've also included electron microscopy images of *Nasonia vitripennis* eggshell membranes and other regions. These are uninterpreted, refer to King (1969) for descriptions. These images are shared because they are slightly clearer than provided in the original *Nasonia* vitelline membrane paper. 
 
 ## Data and scripts to reproduce the figures provided in the paper: 
 
