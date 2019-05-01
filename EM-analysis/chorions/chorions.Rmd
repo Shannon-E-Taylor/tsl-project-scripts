@@ -48,8 +48,8 @@ make_df <- function(df, class, bio_rep){
 
 # This assumes input is fine. Default: get the mean, but overridable. 
 get_technical_means <- function(df, func = mean){
-  means <- aggregate(df$raw, 
-                  list(tech_rep = df$tech_rep, 
+  means <- aggregate(df$AvgDistance, 
+                  list(tech_rep = df$Filename, 
                        bio_rep = df$bio_rep, 
                        class = df$class), 
                   FUN = func, 
@@ -107,6 +107,7 @@ meta.df <- rbind(zero.df, three.df,
                  seven.df, nine.df)
 
 meta.df <- na.omit(meta.df)
+meta.df <- meta.df[meta.df$AvgDistance < 100000,] #sclude the stopid outlier
 
 # meta.df <- rbind(filter(zero.df, !tech_rep %in% remove_zero), 
 #                   filter(three.df, !tech_rep %in% remove_three), 
@@ -144,7 +145,7 @@ tech_cohens <- cohen.d(d = means[means$class == "tsl-",]$x,
 
 ```{r, include = TRUE}
 
-p <- ggerrorplot(meta.df, x = "class", y = "AvgDistance", add = "jitter", 
+p <- ggerrorplot(agg_means, x = "class", y = "x", add = "jitter", 
                                add.params = list(jitter = 0.1, color = "grey", alpha = 0.8)) + ylim(0, 1200) + 
   stat_compare_means(aes(group = class), method = "t.test") + 
   ylab("Chorion width (nm)") + 

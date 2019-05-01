@@ -32,6 +32,7 @@ qpcr/ contains raw data and scripts for qPCR analysis.
 │   │   ├── unnamed-chunk-4-1.png
 │   │   ├── unnamed-chunk-6-1.png
 │   │   └── unnamed-chunk-8-1.png
+│   ├── chorions #chorion data and scripts 
 │   └── gaps.csv
 ├── EM-pictures #All my images of Nasonia ovaries
 │   ├── 0B_gridA3 #tsl-
