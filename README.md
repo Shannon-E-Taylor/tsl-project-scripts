@@ -1,6 +1,6 @@
 # tsl-project-scripts
 
-Supplementary scripts and raw data for Taylor, Tuffrey et al. 2019- available at __BIORXIV__. 
+Supplementary scripts and raw data for Taylor, Tuffrey et al. 2019 http://www.ncbi.nlm.nih.gov/pubmed/31488408
 
 ## Useful data: 
 
